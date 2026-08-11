@@ -1,0 +1,40 @@
+# OS / junk
+.DS_Store
+Thumbs.db
+__MACOSX/
+*.zip
+
+# Large competition data (keep local; do not push)
+/data/
+/images/
+data.csv
+images.zip
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Models / caches (use SHARED_MODELS_PATH or local download)
+/shared_models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+!baseline/**/*.joblib
+
+# IDE / Cursor
+.idea/
+.vscode/
+.cursor/
+
+# Outputs
+submit.csv
+**/outputs/
+**/artifacts/*.csv
+*.log
