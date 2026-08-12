@@ -1,0 +1,13 @@
+﻿{
+  "task": "quality_control",
+  "phase": 0,
+  "status": "awaiting_gpu_measurement",
+  "limits_minutes": {
+    "check": 3,
+    "public": 20,
+    "private": 40
+  },
+  "measured": null,
+  "note": "Timing to be measured on GPU with Docker baseline image and full subset.",
+  "generated_at": "2026-08-12T03:33:02.933764+00:00"
+}

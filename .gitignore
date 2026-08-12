@@ -33,6 +33,10 @@ venv/
 .vscode/
 .cursor/
 
+# Local dev data (subset CSV, smoke outputs — not for repo)
+local_data/
+.local/
+
 # Outputs
 submit.csv
 **/outputs/
