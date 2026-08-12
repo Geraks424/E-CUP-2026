@@ -113,21 +113,25 @@ def generate_comments_cuda(
 
     if _is_local:
         tokenizer = AutoTokenizer.from_pretrained(llm_model_path, local_files_only=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            llm_model_path,
+        load_kwargs = dict(
             torch_dtype=torch.float16,
             local_files_only=True,
             trust_remote_code=True,
             device_map="auto",
         )
+        if torch.cuda.is_available():
+            load_kwargs["max_memory"] = {0: "7GiB", "cpu": "16GiB"}
+        model = AutoModelForCausalLM.from_pretrained(llm_model_path, **load_kwargs)
     else:
         tokenizer = AutoTokenizer.from_pretrained(llm_model_path)
-        model = AutoModelForCausalLM.from_pretrained(
-            llm_model_path,
+        load_kwargs = dict(
             torch_dtype=torch.float16,
             trust_remote_code=True,
             device_map="auto",
         )
+        if torch.cuda.is_available():
+            load_kwargs["max_memory"] = {0: "7GiB", "cpu": "16GiB"}
+        model = AutoModelForCausalLM.from_pretrained(llm_model_path, **load_kwargs)
 
     model.eval()
     n = len(df)

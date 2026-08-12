@@ -18,9 +18,12 @@ __pycache__/
 .venv/
 venv/
 .env
+.cache/
+.tmp/
 
 # Models / caches (use SHARED_MODELS_PATH or local download)
 /shared_models/
+shared_models/
 *.safetensors
 *.bin
 *.pt

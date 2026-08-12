@@ -1,13 +1,34 @@
 ﻿{
   "task": "quality_control",
   "phase": 0,
-  "status": "awaiting_gpu_measurement",
+  "status": "subset_measured",
+  "generated_at": "2026-08-12T04:28:48.641334+00:00",
   "limits_minutes": {
     "check": 3,
     "public": 20,
     "private": 40
   },
-  "measured": null,
-  "note": "Timing to be measured on GPU with Docker baseline image and full subset.",
-  "generated_at": "2026-08-12T03:33:02.933764+00:00"
+  "note": "H100 Docker limits are competition targets; local 8GB subset timings are separate and not extrapolated to full 12k.",
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3060 Ti",
+    "vram_gb": 8,
+    "driver": "610.88"
+  },
+  "inference_profile": {
+    "embed_batch": 1,
+    "llm_batch": 1,
+    "pixel_preset": "S"
+  },
+  "measured": {
+    "subset_rows": 50,
+    "wall_seconds": 701.6,
+    "seconds_per_row": 14.0,
+    "smoke_rows": 3,
+    "smoke_wall_seconds": 58.6,
+    "gpu_memory_used_mib_end": 530,
+    "gpu_memory_used_mib_start": 582,
+    "awaiting_gpu_measurement": false,
+    "full_12k_claimed": false
+  },
+  "storage_policy": "D:-only (venv, caches, models, outputs under D:\\E-CUP 2026\\; images D:\\images)"
 }

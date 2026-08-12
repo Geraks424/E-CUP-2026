@@ -6,7 +6,12 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from src.constants import PIXEL_PRESETS, DEFAULT_EMBED_BATCH_SIZE, DEFAULT_LLM_BATCH_SIZE
+from src.constants import (
+    PIXEL_PRESETS,
+    DEFAULT_EMBED_BATCH_SIZE,
+    DEFAULT_LLM_BATCH_SIZE,
+    DEFAULT_PIXEL_PRESET,
+)
 from src.utils_data_prep import prepare_dataframe
 from src.utils_logreg import ProductQualityPredictor
 from src.utils_postprocess import format_results
@@ -26,6 +31,24 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Product quality predictor submit pipeline")
     parser.add_argument("--test_data_path", type=str, help="test data path")
     parser.add_argument("--output_path", type=str, help="output file")
+    parser.add_argument(
+        "--embed_batch",
+        type=int,
+        default=DEFAULT_EMBED_BATCH_SIZE,
+        help="Embedding batch size (H100 default: 128; 8GB GPU: 1-2)",
+    )
+    parser.add_argument(
+        "--llm_batch",
+        type=int,
+        default=DEFAULT_LLM_BATCH_SIZE,
+        help="LLM generation batch size (H100 default: 64; 8GB GPU: 1)",
+    )
+    parser.add_argument(
+        "--pixel_preset",
+        choices=tuple(PIXEL_PRESETS.keys()),
+        default=DEFAULT_PIXEL_PRESET,
+        help="Vision pixel budget preset S/M/L (H100 default: M; 8GB GPU: S)",
+    )
     args = parser.parse_args()
 
     # Step 1: read and prepare combined text + structured image paths
@@ -33,11 +56,11 @@ def main() -> None:
     images_path = data_path.parent / "images"
     current_df = prepare_dataframe(data_path, images_path)
 
-    # Step 2: extract embeddings for text+images (batch_size=128 for H100 80GB)
+    # Step 2: extract embeddings for text+images
     current_embeddings = embed_data_cuda(
         MODEL_EMBED_PATH, current_df,
-        max_pixels=PIXEL_PRESETS["M"],
-        batch_size=DEFAULT_EMBED_BATCH_SIZE,
+        max_pixels=PIXEL_PRESETS[args.pixel_preset],
+        batch_size=args.embed_batch,
     )
     current_df['embedding'] = current_embeddings.tolist()
 
@@ -50,7 +73,7 @@ def main() -> None:
     # Step 4: generate comments
     comments = generate_comments_cuda(
         MODEL_LLM_PATH, current_df,
-        batch_size=DEFAULT_LLM_BATCH_SIZE,
+        batch_size=args.llm_batch,
     )
 
     # Step 5: patch comments and make them comply with length constraints

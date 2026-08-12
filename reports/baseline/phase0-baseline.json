@@ -1,36 +1,63 @@
 {
   "task": "quality_control",
   "phase": 0,
-  "mode": "dry_run",
-  "status": "awaiting_gpu",
-  "generated_at": "2026-08-12T03:33:02.844743+00:00",
-  "input_csv": "D:\\E-CUP 2026\\local_data\\quality_subset.csv",
-  "submission_csv": "D:\\E-CUP 2026\\local_data\\smoke_submit.csv",
+  "mode": "model",
+  "status": "completed",
+  "generated_at": "2026-08-12T04:28:48.641334+00:00",
+  "input_csv": "D:\\quality_subset.csv",
+  "submission_csv": "D:\\E-CUP 2026\\local_data\\model_submit.csv",
+  "subset_size": 50,
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3060 Ti",
+    "vram_gb": 8,
+    "driver": "610.88",
+    "cuda_torch": "2.6.0+cu124"
+  },
+  "inference_profile": {
+    "embed_batch": 1,
+    "llm_batch": 1,
+    "pixel_preset": "S",
+    "llm_offload": "device_map=auto, max_memory 7GiB GPU + 16GiB CPU",
+    "note": "8GB local profile; H100 defaults unchanged in code (128/64/M)"
+  },
+  "storage": {
+    "policy": "D:-only",
+    "venv": "D:\\E-CUP 2026\\.venv",
+    "shared_models": "D:\\E-CUP 2026\\shared_models",
+    "cache": "D:\\E-CUP 2026\\.cache",
+    "images": "D:\\images",
+    "outputs": "D:\\E-CUP 2026\\local_data"
+  },
   "metrics": {
-    "macro_f1": 1.0,
+    "macro_f1": 0.5006839945280438,
     "per_category_f1": {
-      "БАД": 1.0,
-      "Легковоспламеняющиеся": 1.0
+      "БАД": 0.8837209302325582,
+      "Легковоспламеняющиеся": 0.11764705882352941
     },
     "per_category": {
       "БАД": {
-        "f1": 1.0,
-        "support": 115,
-        "positives_true": 86,
-        "positives_pred": 86
+        "f1": 0.8837209302325582,
+        "support": 29,
+        "positives_true": 22,
+        "positives_pred": 21
       },
       "Легковоспламеняющиеся": {
-        "f1": 1.0,
-        "support": 85,
-        "positives_true": 3,
-        "positives_pred": 3
+        "f1": 0.11764705882352941,
+        "support": 21,
+        "positives_true": 1,
+        "positives_pred": 16
       }
     },
-    "rows_scored": 200,
+    "rows_scored": 50,
     "verdict_mapping": {
       "не бан": 1,
       "бан": 0
     },
-    "note": "Macro F1 = mean of per-category F1 (БАД, Легковоспламеняющиеся). Dry-run scores use label-based placeholder verdicts, not model inference."
+    "note": "Macro F1 = mean of per-category F1 (БАД, Легковоспламеняющиеся). Real baseline inference (Qwen3-VL embed + logreg + Qwen3.5-4B comments)."
+  },
+  "dry_run_reference": {
+    "mode": "dry_run",
+    "macro_f1": 1.0,
+    "note": "Oracle F1 from label-based smoke placeholder; infra check only, not primary baseline result."
   }
 }

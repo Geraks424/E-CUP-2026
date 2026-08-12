@@ -29,6 +29,7 @@ def _parse_verdict(result: str) -> int | None:
 def score_submission(
     input_csv: Path,
     submission_csv: Path,
+    mode: str = "dry_run",
 ) -> dict:
     input_df = pd.read_csv(input_csv)
     sub_df = pd.read_csv(submission_csv)
@@ -64,8 +65,12 @@ def score_submission(
         "rows_scored": int(len(merged)),
         "verdict_mapping": {"не бан": 1, "бан": 0},
         "note": (
-            "Macro F1 = mean of per-category F1 (БАД, Легковоспламеняющиеся). "
-            "Dry-run scores use label-based placeholder verdicts, not model inference."
+            "Macro F1 = mean of per-category F1 (БАД, Легковоспламеняющиеся)."
+            + (
+                " Dry-run scores use label-based placeholder verdicts, not model inference."
+                if mode == "dry_run"
+                else " Scores from real baseline model inference (logreg + LLM comments)."
+            )
         ),
     }
 
@@ -89,7 +94,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        metrics = score_submission(args.input_csv, args.submission_csv)
+        metrics = score_submission(args.input_csv, args.submission_csv, mode=args.mode)
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -98,7 +103,7 @@ def main() -> int:
         "task": "quality_control",
         "phase": 0,
         "mode": args.mode,
-        "status": "awaiting_gpu" if args.mode == "dry_run" else "model_run",
+        "status": "awaiting_gpu" if args.mode == "dry_run" else "completed",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "input_csv": str(args.input_csv),
         "submission_csv": str(args.submission_csv),
