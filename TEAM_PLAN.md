@@ -65,7 +65,7 @@
 ## Фаза 4 — Классификатор «Легковоспламеняющиеся»  
 **Owner: Марк**
 
-**Статус 19.08.2026: выполнено.** OOF F1_огонь = **0.908** (694 cached rows, все 198 positives); артефакт `mark_flammable_model.joblib`; отчёты `reports/mark/phase4-flammable.json`. Baseline reference (50-row): F1_огонь = 0.1176.
+**Статус 19.08.2026: выполнено.** OOF F1_огонь = **0.893** (931 cached rows, все 198 positives); артефакт `mark_flammable_model.joblib`. Кэш продолжается шагами по 150 строк, один процесс. Baseline 50-row: F1_огонь = 0.1176.
 
 - Мультимодальные эмбеддинги (1–5 фото), акцент на комплект/содержимое.
 - Работа с редким классом (class_weight / порог / oversample).

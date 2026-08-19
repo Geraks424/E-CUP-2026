@@ -73,7 +73,7 @@ Fallback: multimodal baseline logreg per category if the artifact is missing.
 
 50-row offline subset (`reports/baseline/phase0-baseline.json`): F1_огонь = **0.1176**.
 
-Phase 4 OOF (19.08.2026): F1_огонь = **0.908** on 694 cached rows (all 198 positives + 496 negatives). Target ≥ 0.30 met. Resume `cache_flammable_embeddings.py` to extend negative coverage toward 5502 rows.
+Phase 4 OOF (19.08.2026): F1_огонь = **0.893** on **931** cached rows (all 198 positives + 733 negatives). Previous 0.908 was on 694 rows. Target ≥ 0.30 met. Resume bounded cache (`--max_new_rows 150`) toward 5502; do not run parallel jobs.
 
 ## Comparison modes (same outer folds)
 
