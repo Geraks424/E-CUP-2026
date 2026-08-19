@@ -310,3 +310,38 @@ def bad_rule_features(text: object) -> list[float]:
     decision = apply_bad_rules(normalized)
     no_direct_marker = 1.0 - direct
     return [direct, explicit_negative, sports, no_direct_marker, decision.score]
+
+
+def flammable_rule_features(text: object) -> list[float]:
+    """Numeric rule features consumed by the flammable multimodal classifier."""
+
+    normalized = normalize_product_text(text)
+    absent_content = float(bool(_matches(normalized, _FLAMMABLE_NO_CONTENT)))
+    component_only = float(bool(_matches(normalized, _FLAMMABLE_COMPONENT_ONLY)))
+    built_in_source = float(bool(_matches(normalized, _FLAMMABLE_BUILT_IN)))
+    source_matches = _matches(normalized, _FLAMMABLE_SOURCE)
+    matches = float(any(code == "flammable_matches" for code, _ in source_matches))
+    lighter = float(any(code == "flammable_lighter" for code, _ in source_matches))
+    substance_matches = _matches(normalized, _FLAMMABLE_SUBSTANCE)
+    gas_container = float(any(code == "flammable_gas_container" for code, _ in substance_matches))
+    fuel = float(any(code == "flammable_fuel" for code, _ in substance_matches))
+    coal_or_wood = float(any(code == "flammable_coal_or_wood" for code, _ in substance_matches))
+    explicit_flammable = float(any(code == "flammable_explicit" for code, _ in substance_matches))
+    device_matches = _matches(normalized, _FLAMMABLE_DEVICE)
+    device = float(any(code == "flammable_device" for code, _ in device_matches))
+    built_in_ignition = float(any(code == "flammable_built_in_ignition" for code, _ in device_matches))
+    decision = apply_flammable_rules(normalized)
+    return [
+        absent_content,
+        component_only,
+        built_in_source,
+        matches,
+        lighter,
+        gas_container,
+        fuel,
+        coal_or_wood,
+        explicit_flammable,
+        device,
+        built_in_ignition,
+        decision.score,
+    ]

@@ -18,12 +18,14 @@ from src.utils_postprocess import format_results
 from src.utils_embed_cuda import embed_data_cuda
 from src.utils_generate_cuda import generate_comments_cuda
 from src.bad_classifier import BadQualityClassifier, predict_bad_rows
-from src.rules import BAD_CATEGORY, apply_rules
+from src.flammable_classifier import FlammableQualityClassifier, predict_flammable_rows
+from src.rules import BAD_CATEGORY, FLAMMABLE_CATEGORY, apply_rules
 
 # Classifier artifacts live next to run.py in the submitted archive.
 _SUBMIT_ROOT = Path(__file__).resolve().parent
 CLASSIFIER_PATH = _SUBMIT_ROOT / "baseline_qwen3vl_bf16.joblib"
 BAD_CLASSIFIER_PATH = _SUBMIT_ROOT / "arseniy_bad_text_model.joblib"
+FLAMMABLE_CLASSIFIER_PATH = _SUBMIT_ROOT / "mark_flammable_model.joblib"
 
 # Models path: match evaluator's SHARED_MODELS_PATH convention
 _SHARED_MODELS_DIR = os.environ.get("SHARED_MODELS_PATH", "/shared_models")
@@ -99,8 +101,7 @@ def main() -> None:
     current_df['pred'] = baseline_preds
     current_df['classifier_source'] = "multimodal_baseline"
 
-    # Phase 3: replace only the БАД head.  Phase 4 remains owned by the
-    # multimodal baseline until its dedicated classifier is integrated.
+    # Phase 3: replace only the БАД head.
     if BAD_CLASSIFIER_PATH.is_file():
         bad_model = BadQualityClassifier.load(BAD_CLASSIFIER_PATH)
         bad_mask = current_df['category'].astype(str).eq(BAD_CATEGORY).to_numpy()
@@ -111,6 +112,25 @@ def main() -> None:
     else:
         print(
             f"WARNING: БАД artifact not found at {BAD_CLASSIFIER_PATH}; "
+            "using the multimodal baseline for that category.",
+            file=sys.stderr,
+        )
+
+    # Phase 4: replace only the flammable head when the dedicated artifact exists.
+    flame_mask = current_df['category'].astype(str).eq(FLAMMABLE_CATEGORY).to_numpy()
+    if FLAMMABLE_CLASSIFIER_PATH.is_file():
+        flame_model = FlammableQualityClassifier.load(FLAMMABLE_CLASSIFIER_PATH)
+        flame_probs, flame_preds = predict_flammable_rows(
+            flame_model,
+            current_df,
+            current_embeddings,
+        )
+        current_df.loc[flame_mask, 'logreg_prob'] = flame_probs
+        current_df.loc[flame_mask, 'pred'] = flame_preds
+        current_df.loc[flame_mask, 'classifier_source'] = "mark_flammable_embed_rules"
+    else:
+        print(
+            f"WARNING: flammable artifact not found at {FLAMMABLE_CLASSIFIER_PATH}; "
             "using the multimodal baseline for that category.",
             file=sys.stderr,
         )

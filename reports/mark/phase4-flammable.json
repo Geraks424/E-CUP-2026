@@ -1,0 +1,219 @@
+{
+  "task": "quality_control",
+  "owner": "Марк Досков",
+  "phase": 4,
+  "category": "Легковоспламеняющиеся",
+  "generated_at": "2026-08-19T13:52:36.418671+00:00",
+  "data": {
+    "path": "D:\\data.csv",
+    "sha256": "4bc59e640563160fa04572b570606ceb1dd3d31627c6cf7fd1750ae4ea61f510",
+    "rows_category_total": 5502,
+    "rows_with_embeddings": 694,
+    "label_counts": {
+      "0": 496,
+      "1": 198
+    },
+    "embedding_cache": "local_data\\flammable_embed_cache",
+    "missing_embeddings": 4808
+  },
+  "validation": {
+    "method": "out-of-fold StratifiedGroupKFold grouped by normalized exact product name",
+    "folds": 5,
+    "seed": 42,
+    "threshold_tuned_on": "train-fold probabilities only; OOF uses that fold's threshold",
+    "per_fold_thresholds": [
+      0.49999999999999994,
+      0.49999999999999994,
+      0.49999999999999994,
+      0.49999999999999994,
+      0.49999999999999994
+    ],
+    "deployed_threshold_median_of_folds": 0.49999999999999994,
+    "per_fold_embed_thresholds": [
+      0.49999999999999994,
+      0.49999999999999994,
+      0.49999999999999994,
+      0.49999999999999994,
+      0.49999999999999994
+    ],
+    "oof": {
+      "f1": 0.9076923076923077,
+      "precision": 0.921875,
+      "recall": 0.8939393939393939,
+      "confusion_matrix_labels_0_1": [
+        [
+          481,
+          15
+        ],
+        [
+          21,
+          177
+        ]
+      ],
+      "positives_true": 198,
+      "positives_pred": 192,
+      "rows": 694
+    },
+    "per_fold_at_global_threshold": [
+      {
+        "fold": 1,
+        "f1": 0.9113924050632911,
+        "precision": 0.9230769230769231,
+        "recall": 0.9,
+        "confusion_matrix_labels_0_1": [
+          [
+            96,
+            3
+          ],
+          [
+            4,
+            36
+          ]
+        ],
+        "positives_true": 40,
+        "positives_pred": 39,
+        "rows": 139
+      },
+      {
+        "fold": 2,
+        "f1": 0.8974358974358975,
+        "precision": 0.9210526315789473,
+        "recall": 0.875,
+        "confusion_matrix_labels_0_1": [
+          [
+            97,
+            3
+          ],
+          [
+            5,
+            35
+          ]
+        ],
+        "positives_true": 40,
+        "positives_pred": 38,
+        "rows": 140
+      },
+      {
+        "fold": 3,
+        "f1": 0.8533333333333334,
+        "precision": 0.8888888888888888,
+        "recall": 0.8205128205128205,
+        "confusion_matrix_labels_0_1": [
+          [
+            95,
+            4
+          ],
+          [
+            7,
+            32
+          ]
+        ],
+        "positives_true": 39,
+        "positives_pred": 36,
+        "rows": 138
+      },
+      {
+        "fold": 4,
+        "f1": 0.9367088607594937,
+        "precision": 0.9487179487179487,
+        "recall": 0.925,
+        "confusion_matrix_labels_0_1": [
+          [
+            97,
+            2
+          ],
+          [
+            3,
+            37
+          ]
+        ],
+        "positives_true": 40,
+        "positives_pred": 39,
+        "rows": 139
+      },
+      {
+        "fold": 5,
+        "f1": 0.9367088607594937,
+        "precision": 0.925,
+        "recall": 0.9487179487179487,
+        "confusion_matrix_labels_0_1": [
+          [
+            96,
+            3
+          ],
+          [
+            2,
+            37
+          ]
+        ],
+        "positives_true": 39,
+        "positives_pred": 40,
+        "rows": 138
+      }
+    ],
+    "rules_only": {
+      "f1": 0.2776735459662289,
+      "precision": 0.2208955223880597,
+      "recall": 0.37373737373737376,
+      "confusion_matrix_labels_0_1": [
+        [
+          235,
+          261
+        ],
+        [
+          124,
+          74
+        ]
+      ],
+      "positives_true": 198,
+      "positives_pred": 335,
+      "rows": 694
+    },
+    "embedding_logreg_only": {
+      "f1": 0.9076923076923077,
+      "precision": 0.921875,
+      "recall": 0.8939393939393939,
+      "confusion_matrix_labels_0_1": [
+        [
+          481,
+          15
+        ],
+        [
+          21,
+          177
+        ]
+      ],
+      "positives_true": 198,
+      "positives_pred": 192,
+      "rows": 694
+    },
+    "baseline_reference": {
+      "source": "reports/baseline/phase0-baseline.json (50-row subset)",
+      "per_category_f1_flammable": 0.11764705882352941,
+      "beats_baseline": true,
+      "beats_embedding_logreg_same_folds": false
+    }
+  },
+  "model": {
+    "type": "Qwen3-VL embedding + official rule features + logistic regression",
+    "c": 1.0,
+    "class_weight": "balanced",
+    "oversample_positives": true,
+    "artifact": "baseline\\quality-baseline-submit\\mark_flammable_model.joblib",
+    "artifact_size_bytes": 16614,
+    "artifact_sha256": "1a31e8620c3472079efd6d580d191fe3615aa0d1f1cc728fac71c7bc048c54e7"
+  },
+  "error_analysis": {
+    "misclassified_rows": 36,
+    "report": "reports\\mark\\phase4-flammable-errors.csv",
+    "ordering": "most confident OOF errors first"
+  },
+  "label_contract": {
+    "0": "не качественный / бан",
+    "1": "качественный / не бан"
+  },
+  "limitations": [
+    "Training uses cached multimodal embeddings only for rows present in the embed cache.",
+    "Inference in run.py reuses embeddings computed for the full submission batch."
+  ]
+}

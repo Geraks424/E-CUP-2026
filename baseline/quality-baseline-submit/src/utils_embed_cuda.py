@@ -215,3 +215,122 @@ def embed_data_cuda(
         torch.cuda.reset_peak_memory_stats()
 
     return all_embeddings
+
+
+def embed_dataframe_chunks_cuda(
+    embed_model_path: str,
+    df: pd.DataFrame,
+    *,
+    max_pixels: int = 128 * 28 * 28,
+    batch_size: int = 1,
+    chunk_size: int = 32,
+):
+    """Yield (start, end, embeddings) slices while loading the VLM only once."""
+
+    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    _is_local = os.path.exists(embed_model_path) or (
+        os.path.isabs(embed_model_path) and not embed_model_path.startswith(("http://", "https://", "file://"))
+    )
+    if _is_local:
+        processor = AutoProcessor.from_pretrained(embed_model_path, local_files_only=True)
+        model = AutoModel.from_pretrained(
+            embed_model_path, torch_dtype=torch.float16, local_files_only=True, trust_remote_code=True
+        )
+    else:
+        processor = AutoProcessor.from_pretrained(embed_model_path)
+        model = AutoModel.from_pretrained(
+            embed_model_path, torch_dtype=torch.float16, trust_remote_code=True
+        )
+    model = model.to(device).eval()
+
+    n = len(df)
+    try:
+        for chunk_start in range(0, n, chunk_size):
+            chunk_end = min(chunk_start + chunk_size, n)
+            chunk_df = df.iloc[chunk_start:chunk_end].reset_index(drop=True)
+            chunk_embeddings = np.zeros((len(chunk_df), 0), dtype=np.float32)
+
+            for start in range(0, len(chunk_df), batch_size):
+                end = min(start + batch_size, len(chunk_df))
+                batch_df = chunk_df.iloc[start:end].reset_index(drop=True)
+                has_images_mask = batch_df["image_paths"].apply(lambda x: bool(x and len(x) > 0))
+                df_with_imgs = batch_df[has_images_mask].reset_index(drop=True)
+                df_text_only = batch_df[~has_images_mask].reset_index(drop=True)
+                emb_with_list: List[np.ndarray] = []
+                emb_text_list: List[np.ndarray] = []
+
+                if len(df_with_imgs) > 0:
+                    texts_with_imgs = df_with_imgs["text"].tolist()
+                    all_images = []
+                    for _, row in df_with_imgs.iterrows():
+                        imgs = []
+                        for p in row["image_paths"]:
+                            raw = Image.open(p).convert("RGB")
+                            imgs.append(_resize_image_to_max_pixels(raw, max_pixels))
+                        all_images.append(imgs)
+                    try:
+                        emb_with = _embed_batch_with_images(
+                            processor, model, texts_with_imgs, all_images, max_pixels, device
+                        )
+                        emb_with_list = list(emb_with)
+                    except torch.cuda.OutOfMemoryError:
+                        emb_with_list = []
+                        for idx in range(len(df_with_imgs)):
+                            single_imgs = all_images[idx]
+                            try:
+                                single_emb = _embed_batch_with_images(
+                                    processor,
+                                    model,
+                                    [texts_with_imgs[idx]],
+                                    [single_imgs],
+                                    max_pixels,
+                                    device,
+                                )
+                                emb_with_list.append(single_emb[0])
+                            except torch.cuda.OutOfMemoryError:
+                                for img in single_imgs:
+                                    img.close()
+                                single_emb = _embed_batch_text_only(
+                                    processor, model, [texts_with_imgs[idx]], device
+                                )
+                                emb_with_list.append(single_emb[0])
+                            finally:
+                                for img in single_imgs:
+                                    try:
+                                        img.close()
+                                    except Exception:
+                                        pass
+
+                if len(df_text_only) > 0:
+                    texts_only = df_text_only["text"].tolist()
+                    emb_text = _embed_batch_text_only(processor, model, texts_only, device)
+                    emb_text_list = list(emb_text)
+
+                emb_with_iter = iter(emb_with_list)
+                emb_text_iter = iter(emb_text_list)
+                batch_result_rows = []
+                for i in range(len(batch_df)):
+                    if has_images_mask.values[i]:
+                        batch_result_rows.append(next(emb_with_iter))
+                    else:
+                        batch_result_rows.append(next(emb_text_iter))
+                batch_result = np.stack(batch_result_rows)
+                if chunk_embeddings.shape[1] == 0:
+                    chunk_embeddings = batch_result.copy()
+                else:
+                    chunk_embeddings = np.concatenate([chunk_embeddings, batch_result], axis=0)
+
+            yield chunk_start, chunk_end, chunk_embeddings
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+    finally:
+        del model, processor
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
