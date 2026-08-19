@@ -3,18 +3,18 @@
   "owner": "Марк Досков",
   "phase": 4,
   "category": "Легковоспламеняющиеся",
-  "generated_at": "2026-08-19T14:18:40.919036+00:00",
+  "generated_at": "2026-08-19T15:51:45.370948+00:00",
   "data": {
     "path": "D:\\data.csv",
     "sha256": "4bc59e640563160fa04572b570606ceb1dd3d31627c6cf7fd1750ae4ea61f510",
     "rows_category_total": 5502,
-    "rows_with_embeddings": 931,
+    "rows_with_embeddings": 5502,
     "label_counts": {
-      "0": 733,
+      "0": 5304,
       "1": 198
     },
     "embedding_cache": "local_data\\flammable_embed_cache",
-    "missing_embeddings": 4571
+    "missing_embeddings": 0
   },
   "validation": {
     "method": "out-of-fold StratifiedGroupKFold grouped by normalized exact product name",
@@ -37,128 +37,128 @@
       0.49999999999999994
     ],
     "oof": {
-      "f1": 0.8928571428571429,
-      "precision": 0.9020618556701031,
-      "recall": 0.8838383838383839,
+      "f1": 0.8284313725490197,
+      "precision": 0.8047619047619048,
+      "recall": 0.8535353535353535,
       "confusion_matrix_labels_0_1": [
         [
-          714,
-          19
+          5263,
+          41
         ],
         [
-          23,
-          175
+          29,
+          169
         ]
       ],
       "positives_true": 198,
-      "positives_pred": 194,
-      "rows": 931
+      "positives_pred": 210,
+      "rows": 5502
     },
     "per_fold_at_global_threshold": [
       {
         "fold": 1,
-        "f1": 0.8533333333333334,
-        "precision": 0.8888888888888888,
-        "recall": 0.8205128205128205,
+        "f1": 0.8571428571428571,
+        "precision": 0.8181818181818182,
+        "recall": 0.9,
         "confusion_matrix_labels_0_1": [
           [
-            143,
-            4
+            1052,
+            8
           ],
           [
-            7,
-            32
+            4,
+            36
           ]
         ],
-        "positives_true": 39,
-        "positives_pred": 36,
-        "rows": 186
+        "positives_true": 40,
+        "positives_pred": 44,
+        "rows": 1100
       },
       {
         "fold": 2,
-        "f1": 0.898876404494382,
-        "precision": 0.8163265306122449,
-        "recall": 1.0,
+        "f1": 0.8192771084337349,
+        "precision": 0.7906976744186046,
+        "recall": 0.85,
         "confusion_matrix_labels_0_1": [
           [
-            138,
+            1053,
             9
           ],
           [
-            0,
-            40
-          ]
-        ],
-        "positives_true": 40,
-        "positives_pred": 49,
-        "rows": 187
-      },
-      {
-        "fold": 3,
-        "f1": 0.9367088607594937,
-        "precision": 0.9487179487179487,
-        "recall": 0.925,
-        "confusion_matrix_labels_0_1": [
-          [
-            144,
-            2
-          ],
-          [
-            3,
-            37
-          ]
-        ],
-        "positives_true": 40,
-        "positives_pred": 39,
-        "rows": 186
-      },
-      {
-        "fold": 4,
-        "f1": 0.8648648648648649,
-        "precision": 0.9411764705882353,
-        "recall": 0.8,
-        "confusion_matrix_labels_0_1": [
-          [
-            144,
-            2
-          ],
-          [
-            8,
-            32
-          ]
-        ],
-        "positives_true": 40,
-        "positives_pred": 34,
-        "rows": 186
-      },
-      {
-        "fold": 5,
-        "f1": 0.9066666666666666,
-        "precision": 0.9444444444444444,
-        "recall": 0.8717948717948718,
-        "confusion_matrix_labels_0_1": [
-          [
-            145,
-            2
-          ],
-          [
-            5,
+            6,
             34
           ]
         ],
+        "positives_true": 40,
+        "positives_pred": 43,
+        "rows": 1102
+      },
+      {
+        "fold": 3,
+        "f1": 0.7777777777777778,
+        "precision": 0.8484848484848485,
+        "recall": 0.717948717948718,
+        "confusion_matrix_labels_0_1": [
+          [
+            1056,
+            5
+          ],
+          [
+            11,
+            28
+          ]
+        ],
         "positives_true": 39,
-        "positives_pred": 36,
-        "rows": 186
+        "positives_pred": 33,
+        "rows": 1100
+      },
+      {
+        "fold": 4,
+        "f1": 0.8372093023255814,
+        "precision": 0.782608695652174,
+        "recall": 0.9,
+        "confusion_matrix_labels_0_1": [
+          [
+            1050,
+            10
+          ],
+          [
+            4,
+            36
+          ]
+        ],
+        "positives_true": 40,
+        "positives_pred": 46,
+        "rows": 1100
+      },
+      {
+        "fold": 5,
+        "f1": 0.8433734939759037,
+        "precision": 0.7954545454545454,
+        "recall": 0.8974358974358975,
+        "confusion_matrix_labels_0_1": [
+          [
+            1052,
+            9
+          ],
+          [
+            4,
+            35
+          ]
+        ],
+        "positives_true": 39,
+        "positives_pred": 44,
+        "rows": 1100
       }
     ],
     "rules_only": {
-      "f1": 0.2215568862275449,
-      "precision": 0.1574468085106383,
+      "f1": 0.0468502690724913,
+      "precision": 0.024991556906450524,
       "recall": 0.37373737373737376,
       "confusion_matrix_labels_0_1": [
         [
-          337,
-          396
+          2417,
+          2887
         ],
         [
           124,
@@ -166,26 +166,26 @@
         ]
       ],
       "positives_true": 198,
-      "positives_pred": 470,
-      "rows": 931
+      "positives_pred": 2961,
+      "rows": 5502
     },
     "embedding_logreg_only": {
-      "f1": 0.8951406649616368,
-      "precision": 0.9067357512953368,
-      "recall": 0.8838383838383839,
+      "f1": 0.8284313725490197,
+      "precision": 0.8047619047619048,
+      "recall": 0.8535353535353535,
       "confusion_matrix_labels_0_1": [
         [
-          715,
-          18
+          5263,
+          41
         ],
         [
-          23,
-          175
+          29,
+          169
         ]
       ],
       "positives_true": 198,
-      "positives_pred": 193,
-      "rows": 931
+      "positives_pred": 210,
+      "rows": 5502
     },
     "baseline_reference": {
       "source": "reports/baseline/phase0-baseline.json (50-row subset)",
@@ -199,13 +199,13 @@
     "c": 1.0,
     "class_weight": "balanced",
     "oversample_positives": true,
-    "artifact": "local_data\\candidate_mark_flammable.joblib",
-    "artifact_size_bytes": 16596,
-    "artifact_sha256": "05345df97ffce13ca618f05e5e2720f5d66d35cdea8c1298039c75084fbfdc2d"
+    "artifact": "baseline\\quality-baseline-submit\\mark_flammable_model.joblib",
+    "artifact_size_bytes": 16617,
+    "artifact_sha256": "77331ead4e598f92efb3accc2ee8b1d7de9564e30324da550e60d51f3fed4f33"
   },
   "error_analysis": {
-    "misclassified_rows": 42,
-    "report": "reports\\mark\\phase4-flammable-candidate-errors.csv",
+    "misclassified_rows": 70,
+    "report": "reports\\mark\\phase4-flammable-errors.csv",
     "ordering": "most confident OOF errors first"
   },
   "label_contract": {

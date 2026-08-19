@@ -91,6 +91,7 @@ def cache_flammable_embeddings(
     prepared = prepare_dataframe(temp_csv, images_path).reset_index(drop=True)
 
     newly_cached = 0
+    oom_stopped = False
     try:
         max_pixels = PIXEL_PRESETS[pixel_preset]
         print(
@@ -98,24 +99,38 @@ def cache_flammable_embeddings(
             f"max_images={max_images}, gpu_frac={gpu_mem_fraction})",
             flush=True,
         )
-        for chunk_start, chunk_end, embeddings in embed_dataframe_chunks_cuda(
-            embed_model_path,
-            prepared,
-            max_pixels=max_pixels,
-            batch_size=embed_batch,
-            chunk_size=chunk_size,
-            max_images=max_images,
-            gpu_mem_fraction=gpu_mem_fraction,
-        ):
-            chunk = prepared.iloc[chunk_start:chunk_end]
-            for row_idx, row_id in enumerate(chunk["id"].tolist()):
-                save_embedding(cache_dir, row_id, embeddings[row_idx])
-                newly_cached += 1
-            print(
-                f"Cached {newly_cached}/{len(selected)} this run "
-                f"(total flame rows={len(flame)})",
-                flush=True,
-            )
+        try:
+            for chunk_start, chunk_end, embeddings in embed_dataframe_chunks_cuda(
+                embed_model_path,
+                prepared,
+                max_pixels=max_pixels,
+                batch_size=embed_batch,
+                chunk_size=chunk_size,
+                max_images=max_images,
+                gpu_mem_fraction=gpu_mem_fraction,
+            ):
+                chunk = prepared.iloc[chunk_start:chunk_end]
+                for row_idx, row_id in enumerate(chunk["id"].tolist()):
+                    save_embedding(cache_dir, row_id, embeddings[row_idx])
+                    newly_cached += 1
+                print(
+                    f"Cached {newly_cached}/{len(selected)} this run "
+                    f"(total flame rows={len(flame)})",
+                    flush=True,
+                )
+        except RuntimeError as exc:
+            message = str(exc).lower()
+            if "out of memory" not in message:
+                raise
+            oom_stopped = True
+            print(f"WARNING: CUDA OOM after {newly_cached} rows; saving progress and stopping this wave.", flush=True)
+            try:
+                import torch
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except Exception:
+                pass
     finally:
         temp_csv.unlink(missing_ok=True)
 
@@ -123,6 +138,7 @@ def cache_flammable_embeddings(
     all_ids = flame["id"].astype(str).tolist()
     rows_cached = sum(1 for row_id in all_ids if row_id in available)
     extra["partial_run"] = rows_cached < len(flame)
+    extra["oom_stopped"] = oom_stopped
     return write_manifest(
         cache_dir,
         data_csv=data_csv,
@@ -156,7 +172,7 @@ def main() -> int:
     parser.add_argument("--chunk_size", type=int, default=4)
     parser.add_argument("--max_new_rows", type=int, default=150)
     parser.add_argument("--max_images", type=int, default=3)
-    parser.add_argument("--gpu_mem_fraction", type=float, default=0.65)
+    parser.add_argument("--gpu_mem_fraction", type=float, default=0.85)
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
@@ -191,6 +207,9 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    if manifest.get("oom_stopped") and int(manifest.get("newly_cached_this_run", 0)) == 0:
+        print("ERROR: OOM before any new row; GPU budget too tight.", file=sys.stderr)
+        return 1
     return 0 if manifest["rows_missing"] == 0 else 2
 
 
