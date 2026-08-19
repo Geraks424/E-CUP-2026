@@ -30,8 +30,3 @@ LLM_MODEL_NAME = "Qwen/Qwen3.5-4B"
 # Comment formatting constants
 MIN_COMMENT_LEN = 50
 MAX_COMMENT_LEN = 300
-MIN_COMMENT_FILLER = " или что-то типа того, я же все-таки LLM в конце-концов."
-MISSING_COMMENT_PLACEHOLDER = (
-    "Здесь мог бы быть развернутый комментарий с объяснением указанного вердикта, "
-    "но я LLM, и я так вижу."
-)

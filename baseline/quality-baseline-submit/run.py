@@ -17,9 +17,13 @@ from src.utils_logreg import ProductQualityPredictor
 from src.utils_postprocess import format_results
 from src.utils_embed_cuda import embed_data_cuda
 from src.utils_generate_cuda import generate_comments_cuda
+from src.bad_classifier import BadQualityClassifier, predict_bad_rows
+from src.rules import BAD_CATEGORY, apply_rules
 
-# Classifier artifact path — Docker mounts artifacts at /app/artifacts/
-CLASSIFIER_PATH = "baseline_qwen3vl_bf16.joblib"
+# Classifier artifacts live next to run.py in the submitted archive.
+_SUBMIT_ROOT = Path(__file__).resolve().parent
+CLASSIFIER_PATH = _SUBMIT_ROOT / "baseline_qwen3vl_bf16.joblib"
+BAD_CLASSIFIER_PATH = _SUBMIT_ROOT / "arseniy_bad_text_model.joblib"
 
 # Models path: match evaluator's SHARED_MODELS_PATH convention
 _SHARED_MODELS_DIR = os.environ.get("SHARED_MODELS_PATH", "/shared_models")
@@ -29,8 +33,24 @@ MODEL_LLM_PATH = os.path.join(_SHARED_MODELS_DIR, "Qwen/Qwen3.5-4B")
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Product quality predictor submit pipeline")
-    parser.add_argument("--test_data_path", type=str, help="test data path")
-    parser.add_argument("--output_path", type=str, help="output file")
+    parser.add_argument(
+        "--test_data_path",
+        "--test-data-path",
+        "-i",
+        dest="test_data_path",
+        type=str,
+        required=True,
+        help="test data path",
+    )
+    parser.add_argument(
+        "--output_path",
+        "--output-path",
+        "-o",
+        dest="output_path",
+        type=str,
+        required=True,
+        help="output file",
+    )
     parser.add_argument(
         "--embed_batch",
         type=int,
@@ -49,6 +69,12 @@ def main() -> None:
         default=DEFAULT_PIXEL_PRESET,
         help="Vision pixel budget preset S/M/L (H100 default: M; 8GB GPU: S)",
     )
+    parser.add_argument(
+        "--comments_mode",
+        choices=("llm", "rules"),
+        default=os.environ.get("COMMENTS_MODE", "llm"),
+        help="LLM explanations or deterministic rule-grounded explanations",
+    )
     args = parser.parse_args()
 
     # Step 1: read and prepare combined text + structured image paths
@@ -66,18 +92,49 @@ def main() -> None:
 
     # Step 3: load classification models and predict
     trained_logreg = ProductQualityPredictor.load(CLASSIFIER_PATH)
-    current_df['logreg_prob'], current_df['pred'] = trained_logreg.predict(
+    baseline_probs, baseline_preds = trained_logreg.predict(
         current_df['embedding'], current_df['category']
     )
+    current_df['logreg_prob'] = baseline_probs
+    current_df['pred'] = baseline_preds
+    current_df['classifier_source'] = "multimodal_baseline"
+
+    # Phase 3: replace only the БАД head.  Phase 4 remains owned by the
+    # multimodal baseline until its dedicated classifier is integrated.
+    if BAD_CLASSIFIER_PATH.is_file():
+        bad_model = BadQualityClassifier.load(BAD_CLASSIFIER_PATH)
+        bad_mask = current_df['category'].astype(str).eq(BAD_CATEGORY).to_numpy()
+        bad_probs, bad_preds = predict_bad_rows(bad_model, current_df)
+        current_df.loc[bad_mask, 'logreg_prob'] = bad_probs
+        current_df.loc[bad_mask, 'pred'] = bad_preds
+        current_df.loc[bad_mask, 'classifier_source'] = "arseniy_bad_text_rules"
+    else:
+        print(
+            f"WARNING: БАД artifact not found at {BAD_CLASSIFIER_PATH}; "
+            "using the multimodal baseline for that category.",
+            file=sys.stderr,
+        )
+
+    decisions = [apply_rules(text, category) for text, category in zip(current_df['text'], current_df['category'])]
+    current_df['rule_score'] = [decision.score for decision in decisions]
+    current_df['rule_label'] = [decision.label for decision in decisions]
 
     # Step 4: generate comments
-    comments = generate_comments_cuda(
-        MODEL_LLM_PATH, current_df,
-        batch_size=args.llm_batch,
-    )
+    if args.comments_mode == "llm":
+        comments = generate_comments_cuda(
+            MODEL_LLM_PATH, current_df,
+            batch_size=args.llm_batch,
+        )
+    else:
+        comments = []
 
-    # Step 5: patch comments and make them comply with length constraints
-    current_df['result'] = format_results(comments, current_df['pred'].tolist())
+    # Step 5: sanitize or replace comments and enforce the Result contract.
+    current_df['result'] = format_results(
+        comments,
+        current_df['pred'].tolist(),
+        categories=current_df['category'].tolist(),
+        texts=current_df['text'].tolist(),
+    )
 
     # Step 6: finalize
     result_df = current_df[['id', 'result']]

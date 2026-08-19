@@ -2,11 +2,12 @@ import gc
 import os
 from typing import List
 
-import numpy as np
 import pandas as pd
 import re
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+
+from src.explanations import build_user_prompt
 
 
 # Helper to tokenize a batch of prompts and generate comments in one pass
@@ -47,29 +48,14 @@ def _generate_batch(
 
 
 _SYSTEM_PROMPT = (
-    "You are a helpful product analyst. Be concise and strictly follow formatting instructions. "
-    "Do NOT output any thinking process, reasoning, or thinking tags. Output only the final answer."
+    "Ты аналитик карточек товаров. Объясняй уже зафиксированный классификатором вердикт, "
+    "не меняй его и не добавляй факты, которых нет в карточке или переданных правилах. "
+    "Не выводи рассуждения, служебные теги и сам вердикт. Верни только итоговый комментарий."
 )
 
-_USER_PROMPT_TEMPLATE = (
-    "Перед нами {pred_label} продукт в онлайн магазине.\n"
-    "Описание продукта: {text}\n\n"
-    "Напиши краткое объяснение почему этот продукт {pred_label_lower} за 30 слов или короче. "
-    "Используй русский язык."
-)
-
-
-# Helper to build chat template prompt for a single sample
-def _build_prompt(text: str, logreg_prob: float, tokenizer) -> str:
-    
-    pred_label = "хороший" if logreg_prob >= 0.5 else "плохой"
-    pred_label_lower = pred_label.lower()
-
-    user_text = _USER_PROMPT_TEMPLATE.format(
-        pred_label=pred_label,
-        pred_label_lower=pred_label_lower,
-        text=text,
-    )
+# Helper to build chat template prompt for a single sample.
+def _build_prompt(text: str, category: str, prediction: int, tokenizer) -> str:
+    user_text = build_user_prompt(text, category, prediction)
 
     messages = [
         {"role": "system", "content": _SYSTEM_PROMPT},
@@ -144,10 +130,10 @@ def generate_comments_cuda(
         # Collect prompts
         prompts_list = []
         for _, row in batch_df.iterrows():
-            text = row.get('text', '') or ''
-            # Do we tweak it? Tinker with it and maybe the score improves :idk:
-            prob = row.get('pred', 0.0) if hasattr(row, 'pred') else 0.0
-            prompts_list.append(_build_prompt(text, prob, tokenizer))
+            text = row.get("text", "") or ""
+            category = str(row.get("category", ""))
+            prediction = 1 if row.get("pred", 0) in (1, True) else 0
+            prompts_list.append(_build_prompt(text, category, prediction, tokenizer))
 
         # Generate in one batch call
         batch_comments = _generate_batch(

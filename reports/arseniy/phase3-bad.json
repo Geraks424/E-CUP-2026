@@ -1,0 +1,180 @@
+{
+  "task": "quality_control",
+  "owner": "Арсений Нестеренко",
+  "phase": 3,
+  "category": "БАД",
+  "generated_at": "2026-08-17T12:32:14.526863+00:00",
+  "data": {
+    "path": "local_data\\data.csv",
+    "sha256": "4bc59e640563160fa04572b570606ceb1dd3d31627c6cf7fd1750ae4ea61f510",
+    "rows": 7469,
+    "label_counts": {
+      "0": 1905,
+      "1": 5564
+    },
+    "missing_descriptions": 19
+  },
+  "validation": {
+    "method": "out-of-fold StratifiedGroupKFold grouped by normalized exact product name",
+    "folds": 5,
+    "seed": 42,
+    "threshold_tuned_on": "OOF probabilities",
+    "threshold": 0.4649999999999999,
+    "oof": {
+      "f1": 0.9520789926623788,
+      "precision": 0.9598173515981735,
+      "recall": 0.9444644140905823,
+      "confusion_matrix_labels_0_1": [
+        [
+          1685,
+          220
+        ],
+        [
+          309,
+          5255
+        ]
+      ],
+      "positives_true": 5564,
+      "positives_pred": 5475,
+      "rows": 7469
+    },
+    "per_fold_at_global_threshold": [
+      {
+        "fold": 1,
+        "f1": 0.9573033707865168,
+        "precision": 0.9568733153638814,
+        "recall": 0.9577338129496403,
+        "confusion_matrix_labels_0_1": [
+          [
+            333,
+            48
+          ],
+          [
+            47,
+            1065
+          ]
+        ],
+        "positives_true": 1112,
+        "positives_pred": 1113,
+        "rows": 1493
+      },
+      {
+        "fold": 2,
+        "f1": 0.9413394919168592,
+        "precision": 0.9686311787072244,
+        "recall": 0.9155435759209344,
+        "confusion_matrix_labels_0_1": [
+          [
+            347,
+            33
+          ],
+          [
+            94,
+            1019
+          ]
+        ],
+        "positives_true": 1113,
+        "positives_pred": 1052,
+        "rows": 1493
+      },
+      {
+        "fold": 3,
+        "f1": 0.9485294117647058,
+        "precision": 0.9699248120300752,
+        "recall": 0.9280575539568345,
+        "confusion_matrix_labels_0_1": [
+          [
+            349,
+            32
+          ],
+          [
+            80,
+            1032
+          ]
+        ],
+        "positives_true": 1112,
+        "positives_pred": 1064,
+        "rows": 1493
+      },
+      {
+        "fold": 4,
+        "f1": 0.961038961038961,
+        "precision": 0.9588918677390528,
+        "recall": 0.9631956912028725,
+        "confusion_matrix_labels_0_1": [
+          [
+            336,
+            46
+          ],
+          [
+            41,
+            1073
+          ]
+        ],
+        "positives_true": 1114,
+        "positives_pred": 1119,
+        "rows": 1496
+      },
+      {
+        "fold": 5,
+        "f1": 0.9517857142857142,
+        "precision": 0.9458740017746229,
+        "recall": 0.9577717879604672,
+        "confusion_matrix_labels_0_1": [
+          [
+            320,
+            61
+          ],
+          [
+            47,
+            1066
+          ]
+        ],
+        "positives_true": 1113,
+        "positives_pred": 1127,
+        "rows": 1494
+      }
+    ],
+    "rules_only": {
+      "f1": 0.8012593467138922,
+      "precision": 0.8852173913043478,
+      "recall": 0.7318475916606758,
+      "confusion_matrix_labels_0_1": [
+        [
+          1377,
+          528
+        ],
+        [
+          1492,
+          4072
+        ]
+      ],
+      "positives_true": 5564,
+      "positives_pred": 4600,
+      "rows": 7469
+    }
+  },
+  "model": {
+    "type": "word TF-IDF + char TF-IDF + official rule features + logistic regression",
+    "c": 2.0,
+    "class_weight": "balanced",
+    "max_word_features": 60000,
+    "max_char_features": 80000,
+    "artifact": "baseline\\quality-baseline-submit\\arseniy_bad_text_model.joblib",
+    "artifact_size_bytes": 2689248,
+    "artifact_sha256": "99d9e97be1f7731f483e0957fdcb4cebd1ca49c72064885bb47d8b95def67113"
+  },
+  "error_analysis": {
+    "misclassified_rows": 529,
+    "report": "reports\\arseniy\\phase3-bad-errors.csv",
+    "ordering": "most confident OOF errors first"
+  },
+  "label_contract": {
+    "0": "не качественный / бан",
+    "1": "качественный / не бан"
+  },
+  "limitations": [
+    "The Phase 3 classifier uses name and description only.",
+    "Image evidence remains available to the existing multimodal baseline and Phase 4 integration."
+  ]
+}
