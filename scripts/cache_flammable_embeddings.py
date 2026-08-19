@@ -16,9 +16,10 @@ if str(_BASELINE_ROOT) not in sys.path:
 
 from src.constants import PIXEL_PRESETS  # noqa: E402
 from src.embed_cache import (  # noqa: E402
+    ExclusivePidLock,
     cached_ids,
-    embedding_path,
     save_embedding,
+    select_uncached_ids,
     write_manifest,
 )
 from src.rules import FLAMMABLE_CATEGORY  # noqa: E402
@@ -34,18 +35,44 @@ def cache_flammable_embeddings(
     embed_model_path: str,
     pixel_preset: str = "S",
     embed_batch: int = 1,
+    chunk_size: int = 4,
+    max_new_rows: int | None = 150,
+    max_images: int = 3,
+    gpu_mem_fraction: float | None = 0.65,
     limit: int | None = None,
 ) -> dict:
+    if embed_batch < 1 or chunk_size < 1:
+        raise ValueError("embed_batch and chunk_size must be >= 1")
+    if max_images < 0:
+        raise ValueError("max_images must be >= 0")
+    if gpu_mem_fraction is not None and not 0.1 <= gpu_mem_fraction <= 1.0:
+        raise ValueError("gpu_mem_fraction must be in [0.1, 1.0]")
+    if max_new_rows is not None and max_new_rows < 0:
+        raise ValueError("max_new_rows must be >= 0")
+
     cache_dir.mkdir(parents=True, exist_ok=True)
     frame = pd.read_csv(data_csv)
     flame = frame.loc[frame["category"].astype(str).eq(FLAMMABLE_CATEGORY)].copy()
     if limit is not None:
         flame = flame.head(limit).copy()
+    flame = flame.sort_values(["label", "id"], ascending=[False, True]).reset_index(drop=True)
 
     cached = cached_ids(cache_dir)
-    missing = flame.loc[~flame["id"].astype(str).isin(cached)].copy()
-    missing = missing.sort_values(["label", "id"], ascending=[False, True]).reset_index(drop=True)
-    if missing.empty:
+    selected_ids = select_uncached_ids(flame["id"].tolist(), cached, max_new_rows)
+    selected = flame.loc[flame["id"].astype(str).isin(selected_ids)].copy()
+    selected["id"] = selected["id"].astype(str)
+    selected = selected.set_index("id").loc[selected_ids].reset_index()
+
+    extra = {
+        "chunk_size": chunk_size,
+        "max_new_rows": max_new_rows,
+        "max_images": max_images,
+        "gpu_mem_fraction": gpu_mem_fraction,
+        "rows_selected_this_run": int(len(selected)),
+        "single_process": True,
+    }
+
+    if selected.empty:
         rows_cached = len([row_id for row_id in flame["id"].astype(str).tolist() if row_id in cached])
         return write_manifest(
             cache_dir,
@@ -56,17 +83,19 @@ def cache_flammable_embeddings(
             rows_requested=len(flame),
             rows_cached=rows_cached,
             newly_cached=0,
+            extra=extra,
         )
 
     temp_csv = cache_dir / "_missing_flame_rows.csv"
-    missing.to_csv(temp_csv, index=False)
+    selected.to_csv(temp_csv, index=False)
     prepared = prepare_dataframe(temp_csv, images_path).reset_index(drop=True)
 
     newly_cached = 0
-    if len(prepared) > 0:
+    try:
         max_pixels = PIXEL_PRESETS[pixel_preset]
         print(
-            f"Embedding {len(prepared)} missing rows in chunks (batch_size={embed_batch})",
+            f"Embedding {len(prepared)} rows (batch={embed_batch}, chunk={chunk_size}, "
+            f"max_images={max_images}, gpu_frac={gpu_mem_fraction})",
             flush=True,
         )
         for chunk_start, chunk_end, embeddings in embed_dataframe_chunks_cuda(
@@ -74,22 +103,26 @@ def cache_flammable_embeddings(
             prepared,
             max_pixels=max_pixels,
             batch_size=embed_batch,
-            chunk_size=32,
+            chunk_size=chunk_size,
+            max_images=max_images,
+            gpu_mem_fraction=gpu_mem_fraction,
         ):
             chunk = prepared.iloc[chunk_start:chunk_end]
             for row_idx, row_id in enumerate(chunk["id"].tolist()):
                 save_embedding(cache_dir, row_id, embeddings[row_idx])
                 newly_cached += 1
             print(
-                f"Cached {newly_cached}/{len(missing)} missing embeddings "
+                f"Cached {newly_cached}/{len(selected)} this run "
                 f"(total flame rows={len(flame)})",
                 flush=True,
             )
-    temp_csv.unlink(missing_ok=True)
+    finally:
+        temp_csv.unlink(missing_ok=True)
 
     available = cached_ids(cache_dir)
     all_ids = flame["id"].astype(str).tolist()
     rows_cached = sum(1 for row_id in all_ids if row_id in available)
+    extra["partial_run"] = rows_cached < len(flame)
     return write_manifest(
         cache_dir,
         data_csv=data_csv,
@@ -99,6 +132,7 @@ def cache_flammable_embeddings(
         rows_requested=len(flame),
         rows_cached=rows_cached,
         newly_cached=newly_cached,
+        extra=extra,
     )
 
 
@@ -119,6 +153,10 @@ def main() -> int:
     )
     parser.add_argument("--pixel_preset", choices=tuple(PIXEL_PRESETS.keys()), default="S")
     parser.add_argument("--embed_batch", type=int, default=1)
+    parser.add_argument("--chunk_size", type=int, default=4)
+    parser.add_argument("--max_new_rows", type=int, default=150)
+    parser.add_argument("--max_images", type=int, default=3)
+    parser.add_argument("--gpu_mem_fraction", type=float, default=0.65)
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
@@ -134,15 +172,24 @@ def main() -> int:
         print(f"ERROR: data CSV not found: {args.data_csv}", file=sys.stderr)
         return 1
 
-    manifest = cache_flammable_embeddings(
-        args.data_csv,
-        args.images_path,
-        args.cache_dir,
-        embed_model_path=embed_model_path,
-        pixel_preset=args.pixel_preset,
-        embed_batch=args.embed_batch,
-        limit=args.limit,
-    )
+    try:
+        with ExclusivePidLock(args.cache_dir):
+            manifest = cache_flammable_embeddings(
+                args.data_csv,
+                args.images_path,
+                args.cache_dir,
+                embed_model_path=embed_model_path,
+                pixel_preset=args.pixel_preset,
+                embed_batch=args.embed_batch,
+                chunk_size=args.chunk_size,
+                max_new_rows=args.max_new_rows,
+                max_images=args.max_images,
+                gpu_mem_fraction=args.gpu_mem_fraction,
+                limit=args.limit,
+            )
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
     return 0 if manifest["rows_missing"] == 0 else 2
 

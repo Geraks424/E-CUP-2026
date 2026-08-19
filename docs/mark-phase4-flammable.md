@@ -39,23 +39,29 @@ Embedding cache (gitignored): `local_data/flammable_embed_cache/{id}.npy`
 cd D:\E-CUP 2026
 .\.venv\Scripts\Activate.ps1
 
-# 1. Cache embeddings (resume by id; RTX 3060 Ti profile)
+# Один процесс. Не запускать второй кэш параллельно.
+# GPU fraction 0.65, batch 1, chunk 4, максимум 3 фото, за шаг не больше 150 новых строк.
 python -u scripts/cache_flammable_embeddings.py `
   --data_csv D:\data.csv `
   --images_path D:\images `
   --cache_dir local_data/flammable_embed_cache `
   --pixel_preset S `
-  --embed_batch 1
+  --embed_batch 1 `
+  --chunk_size 4 `
+  --max_new_rows 150 `
+  --max_images 3 `
+  --gpu_mem_fraction 0.65
 
 # 2. Train + OOF report
 python -u scripts/train_flammable_classifier.py `
   --data_csv D:\data.csv `
   --cache_dir local_data/flammable_embed_cache `
   --oversample_positives
-
-# 3. Unit tests (no extra GPU pass)
-python -m unittest discover -s tests -p "test_*.py"
 ```
+
+Lock-файл: `local_data/flammable_embed_cache/cache.lock`. Если процесс умер, следующий запуск снимет stale lock сам. Если lock живой — второй процесс **сразу выходит**, GPU не трогает.
+
+**Не запускайте несколько `cache_flammable_embeddings.py` сразу** — раньше это забивало 8 GB VRAM и RAM.
 
 ## Inference integration
 
