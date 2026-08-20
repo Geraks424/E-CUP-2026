@@ -12,10 +12,11 @@
     "macro_averaged_f1": 0.5397481615005812,
     "per_category_f1": null,
     "marked_final": false,
-    "split": "unspecified_in_screenshot_check_or_public"
+    "split": "single_submit_ui_no_check_public_toggle",
+    "per_category_available_on_platform": false
   },
   "interpretation": {
     "local_phase0_50row_macro_f1": 0.5006839945280438,
-    "note": "ODS macro ~0.54 is close to the weak Phase 0 GPU subset (flame F1 0.12). Do not treat as a strong public candidate. Per-category F1 was not shown."
+    "note": "Platform UI is a single submit-for-review action; no Check/Public selector and no per-category F1. Official score is macro 0.54 only. Close to Phase 0 GPU subset (flame F1 0.12)."
   }
 }

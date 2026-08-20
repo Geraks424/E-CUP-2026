@@ -79,14 +79,14 @@ python -m unittest tests.test_run_pipeline tests.test_postprocess tests.test_rul
 | CSV | `local_data/phase6_smoke_submit.csv` (gitignored) |
 | Отчёты | `reports/mark/phase6-smoke.json`, `reports/mark/phase6-smoke-score.json` |
 
-## ODS Check / Public (ручной чеклист Марка)
+## ODS (как устроена площадка)
+
+Одна кнопка отправки ZIP на проверку. **Нет** выбора Check/Public и **нет** F1 по категориям. Официальный показатель — колонка Macro Averaged F1.
 
 ZIP: `local_data/quality-baseline-submit.zip` (пересобрать `python scripts/pack_quality_submit.py` если менялся `run.py`). Не коммитить ZIP.
 
-Заполнять **только факты с площадки**, без плейсхолдеров в git, пока нет реального прогона.
-
-1. **Первый сабмит (скрин ~20.08.2026 19:43):** `quality-baseline-submit.zip`, **Success**, Macro Averaged F1 **0.5397481615005812**, «Финал» не отмечен, участник `t154e7a0444a1`. Split Check/Public на скрине не подписан. Per-category нет.  
-   Файл: `reports/mark/phase6-ods-first-submit.json`.
-2. Следующий Public — только после гипотезы (скорее всего огонь тянет macro вниз, как в phase0 F1_огонь 0.12). Не отмечать «Финал».
-3. Передать строку **Владу** в фазу 7.
-4. Фаза 6 Done — только после серии и выбора кандидата. **Сейчас: не Done.**
+1. **Первый сабмит (~20.08.2026):** `quality-baseline-submit.zip`, **Success**, Macro Averaged F1 **0.5397481615005812**, «Финал» не отмечен, `t154e7a0444a1`.  
+   `reports/mark/phase6-ods-first-submit.json`.
+2. Следующий сабмит — только после локальной гипотезы (скорее огонь). Не отмечать «Финал».
+3. Строка **Владу** в фазу 7: этот macro, без выдуманных Check/Public.
+4. Фаза 6 Done — после серии и выбора кандидата. **Сейчас: не Done.**
