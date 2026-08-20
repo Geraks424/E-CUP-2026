@@ -34,9 +34,9 @@
     "note": "LOCAL 10-row labeled subset only. Not an ODS Check/Public score. F1=1.0 is not evidence of leaderboard quality."
   },
   "ods": {
-    "check": "pending",
-    "public": "pending",
-    "public_macro_f1": null,
-    "note": "Hand real Check/Public results to Vlad for Phase 7."
+    "first_submit_status": "Success",
+    "first_submit_macro_f1": 0.5397481615005812,
+    "marked_final": false,
+    "note": "See reports/mark/phase6-ods-first-submit.json. Not a Phase 6 Done."
   }
 }
