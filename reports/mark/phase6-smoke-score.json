@@ -1,0 +1,37 @@
+{
+  "task": "quality_control",
+  "phase": 6,
+  "mode": "model",
+  "status": "completed",
+  "scope": "local_10row_smoke_not_ods",
+  "generated_at": "2026-08-20T07:57:50.510127+00:00",
+  "input_csv": "local_data\\quality_subset.csv",
+  "submission_csv": "local_data\\phase6_smoke_submit.csv",
+  "metrics": {
+    "macro_f1": 1.0,
+    "per_category_f1": {
+      "БАД": 1.0,
+      "Легковоспламеняющиеся": 1.0
+    },
+    "per_category": {
+      "БАД": {
+        "f1": 1.0,
+        "support": 5,
+        "positives_true": 4,
+        "positives_pred": 4
+      },
+      "Легковоспламеняющиеся": {
+        "f1": 1.0,
+        "support": 5,
+        "positives_true": 1,
+        "positives_pred": 1
+      }
+    },
+    "rows_scored": 10,
+    "verdict_mapping": {
+      "не бан": 1,
+      "бан": 0
+    },
+    "note": "LOCAL 10-row subset. Embeddings + classifiers + rule comments (no LLM). Not an ODS Check/Public score."
+  }
+}

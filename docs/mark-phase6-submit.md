@@ -1,7 +1,7 @@
 # Phase 6 — Сборка inference-сабмита (Марк)
 
 **Owner:** Марк  
-**Статус:** пакет для ODS готов локально; **Check / Public не прогнан**. Локальный GPU-smoke **20.08.2026 пропущен** (на RTX 3060 Ti уже был `python.exe -u train_archive.py`, PID 4828, ~2682 MiB). Второй inference не запускали. Фаза 6 в `TEAM_PLAN.md` не закрыта.
+**Статус:** пакет для ODS готов локально; **Check / Public не прогнан**. Локальный GPU-smoke **20.08.2026 15:57 +08 прошёл** (10 строк, `comments_mode=rules`, validator OK). Фаза 6 в `TEAM_PLAN.md` не закрыта.
 
 ## Что входит в ZIP
 
@@ -66,15 +66,18 @@ python -m unittest tests.test_run_pipeline tests.test_postprocess tests.test_rul
 
 ## Evidence: локальный GPU-smoke (20.08.2026)
 
+Первая попытка в 12:05 skip (PID 4828 `train_archive.py`). Повтор в 15:56–15:57 +08, GPU свободна (~580 MiB display).
+
 | Поле | Значение |
 |------|----------|
-| Дата | 2026-08-20 12:05 +08 |
-| GPU | RTX 3060 Ti, driver 610.88, занято ~2682 / 8192 MiB |
-| Решение | **skip** — competing `train_archive.py` (PID 4828) |
-| Строк / comments | не запускалось |
-| Отчёт | `reports/mark/phase6-smoke.json` |
-
-Когда GPU свободна, выполнить команды выше (один процесс, D: env). Residual: повторить smoke, затем валидатор и при наличии `label` — `score_quality_offline.py --mode model` в `reports/mark/` (это **не** ODS score).
+| Дата | 2026-08-20 15:57 +08 |
+| GPU | RTX 3060 Ti, один процесс |
+| Профиль | `--comments_mode rules --embed_batch 1 --llm_batch 1 --pixel_preset S --images_path D:\images` |
+| Строк | 10 (seed 42), категории 5 БАД + 5 огонь |
+| Validator | OK |
+| Локальный offline macro F1 | **1.0** на 10 labeled rows — **не ODS**, не лидерборд |
+| CSV | `local_data/phase6_smoke_submit.csv` (gitignored) |
+| Отчёты | `reports/mark/phase6-smoke.json`, `reports/mark/phase6-smoke-score.json` |
 
 ## ODS Check / Public (ручной чеклист Марка)
 

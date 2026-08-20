@@ -3,32 +3,40 @@
   "owner": "Марк Досков",
   "phase": 6,
   "mode": "gpu_smoke",
-  "status": "skipped",
-  "generated_at": "2026-08-20T04:05:17+00:00",
+  "status": "completed",
+  "generated_at": "2026-08-20T07:57:50+00:00",
   "hardware": {
     "gpu": "NVIDIA GeForce RTX 3060 Ti",
     "vram_gb": 8,
-    "driver": "610.88",
-    "memory_used_mib": 2682,
-    "memory_total_mib": 8192
-  },
-  "blocker": {
-    "reason": "competing_gpu_python",
-    "pid": 4828,
-    "command": "C:\\Users\\Geraks\\AppData\\Local\\Programs\\Python\\Python311\\python.exe -u train_archive.py",
-    "note": "Second E-CUP embed/inference process was not started."
+    "driver": "610.88"
   },
   "smoke": {
-    "rows": null,
+    "rows": 10,
+    "seed": 42,
     "comments_mode": "rules",
+    "embed_batch": 1,
+    "llm_batch": 1,
+    "pixel_preset": "S",
+    "images_path": "D:\\images",
+    "input_csv": "local_data/quality_subset.csv",
     "output_csv": "local_data/phase6_smoke_submit.csv",
-    "validator": null,
-    "offline_score": null
+    "validator": "OK",
+    "wall_time_s_approx": 17,
+    "one_process": true
+  },
+  "local_offline_score": {
+    "macro_f1": 1.0,
+    "per_category_f1": {
+      "БАД": 1.0,
+      "Легковоспламеняющиеся": 1.0
+    },
+    "rows_scored": 10,
+    "note": "LOCAL 10-row labeled subset only. Not an ODS Check/Public score. F1=1.0 is not evidence of leaderboard quality."
   },
   "ods": {
     "check": "pending",
     "public": "pending",
     "public_macro_f1": null,
-    "note": "Do not invent ODS scores. Hand real Check/Public results to Vlad for Phase 7."
+    "note": "Hand real Check/Public results to Vlad for Phase 7."
   }
 }
