@@ -97,6 +97,9 @@ def generate_comments_cuda(
         os.path.isabs(llm_model_path) and not llm_model_path.startswith(("http://", "https://", "file://"))
     )
 
+    gpu_cap = os.environ.get("QUALITY_LLM_MAX_MEMORY", "").strip()
+    cpu_cap = os.environ.get("QUALITY_LLM_CPU_MEMORY", "16GiB").strip() or "16GiB"
+
     if _is_local:
         tokenizer = AutoTokenizer.from_pretrained(llm_model_path, local_files_only=True)
         load_kwargs = dict(
@@ -105,9 +108,6 @@ def generate_comments_cuda(
             trust_remote_code=True,
             device_map="auto",
         )
-        if torch.cuda.is_available():
-            load_kwargs["max_memory"] = {0: "7GiB", "cpu": "16GiB"}
-        model = AutoModelForCausalLM.from_pretrained(llm_model_path, **load_kwargs)
     else:
         tokenizer = AutoTokenizer.from_pretrained(llm_model_path)
         load_kwargs = dict(
@@ -115,9 +115,11 @@ def generate_comments_cuda(
             trust_remote_code=True,
             device_map="auto",
         )
-        if torch.cuda.is_available():
-            load_kwargs["max_memory"] = {0: "7GiB", "cpu": "16GiB"}
-        model = AutoModelForCausalLM.from_pretrained(llm_model_path, **load_kwargs)
+    # H100/ODS: leave unset so the 4B LLM can use the full device.
+    # Local 8 GB: QUALITY_LLM_MAX_MEMORY=7GiB (see docs/mark-phase6-submit.md).
+    if torch.cuda.is_available() and gpu_cap:
+        load_kwargs["max_memory"] = {0: gpu_cap, "cpu": cpu_cap}
+    model = AutoModelForCausalLM.from_pretrained(llm_model_path, **load_kwargs)
 
     model.eval()
     n = len(df)

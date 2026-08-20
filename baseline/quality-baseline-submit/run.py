@@ -77,11 +77,17 @@ def main() -> None:
         default=os.environ.get("COMMENTS_MODE", "llm"),
         help="LLM explanations or deterministic rule-grounded explanations",
     )
+    parser.add_argument(
+        "--images_path",
+        type=str,
+        default=None,
+        help="Images root (default: <test_data_path parent>/images)",
+    )
     args = parser.parse_args()
 
     # Step 1: read and prepare combined text + structured image paths
     data_path = Path(args.test_data_path)
-    images_path = data_path.parent / "images"
+    images_path = Path(args.images_path) if args.images_path else data_path.parent / "images"
     current_df = prepare_dataframe(data_path, images_path)
 
     # Step 2: extract embeddings for text+images

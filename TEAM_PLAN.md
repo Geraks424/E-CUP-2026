@@ -95,6 +95,9 @@
 - Архив ≤5 GB, образ ≤15 GB; smoke на Check.
 - Серия сабмитов на public; откат при регрессии.
 
+**Пакет:** inference ZIP собирается `scripts/pack_quality_submit.py` → `local_data/quality-baseline-submit.zip` (не в git). Документация: `docs/mark-phase6-submit.md`.  
+**ODS Check / Public:** pending (ручная загрузка). Фаза **не Done**, пока нет evidence с площадки.
+
 **Done:** стабильный public-сабмит; выбран кандидат в финальные 2.
 
 ---
