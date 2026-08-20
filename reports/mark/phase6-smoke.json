@@ -1,0 +1,34 @@
+{
+  "task": "quality_control",
+  "owner": "Марк Досков",
+  "phase": 6,
+  "mode": "gpu_smoke",
+  "status": "skipped",
+  "generated_at": "2026-08-20T04:05:17+00:00",
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3060 Ti",
+    "vram_gb": 8,
+    "driver": "610.88",
+    "memory_used_mib": 2682,
+    "memory_total_mib": 8192
+  },
+  "blocker": {
+    "reason": "competing_gpu_python",
+    "pid": 4828,
+    "command": "C:\\Users\\Geraks\\AppData\\Local\\Programs\\Python\\Python311\\python.exe -u train_archive.py",
+    "note": "Second E-CUP embed/inference process was not started."
+  },
+  "smoke": {
+    "rows": null,
+    "comments_mode": "rules",
+    "output_csv": "local_data/phase6_smoke_submit.csv",
+    "validator": null,
+    "offline_score": null
+  },
+  "ods": {
+    "check": "pending",
+    "public": "pending",
+    "public_macro_f1": null,
+    "note": "Do not invent ODS scores. Hand real Check/Public results to Vlad for Phase 7."
+  }
+}

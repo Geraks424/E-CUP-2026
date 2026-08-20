@@ -1,7 +1,7 @@
 # Phase 6 — Сборка inference-сабмита (Марк)
 
 **Owner:** Марк  
-**Статус:** пакет для ODS готов локально; **Check / Public не прогнан** (ручной шаг вне репозитория). Фаза 6 в `TEAM_PLAN.md` не закрыта.
+**Статус:** пакет для ODS готов локально; **Check / Public не прогнан**. Локальный GPU-smoke **20.08.2026 пропущен** (на RTX 3060 Ti уже был `python.exe -u train_archive.py`, PID 4828, ~2682 MiB). Второй inference не запускали. Фаза 6 в `TEAM_PLAN.md` не закрыта.
 
 ## Что входит в ZIP
 
@@ -64,6 +64,27 @@ Docker inspect образа — если Docker доступен локальн�
 python -m unittest tests.test_run_pipeline tests.test_postprocess tests.test_rules -v
 ```
 
-## ODS Check / Public
+## Evidence: локальный GPU-smoke (20.08.2026)
 
-Загрузка ZIP и фиксация public score — **вручную**. Не записывать выдуманный public F1 в доки. Кандидат в финальные 2 выбирается после серии сабмитов (фаза 6 Done в TEAM_PLAN).
+| Поле | Значение |
+|------|----------|
+| Дата | 2026-08-20 12:05 +08 |
+| GPU | RTX 3060 Ti, driver 610.88, занято ~2682 / 8192 MiB |
+| Решение | **skip** — competing `train_archive.py` (PID 4828) |
+| Строк / comments | не запускалось |
+| Отчёт | `reports/mark/phase6-smoke.json` |
+
+Когда GPU свободна, выполнить команды выше (один процесс, D: env). Residual: повторить smoke, затем валидатор и при наличии `label` — `score_quality_offline.py --mode model` в `reports/mark/` (это **не** ODS score).
+
+## ODS Check / Public (ручной чеклист Марка)
+
+ZIP: `local_data/quality-baseline-submit.zip` (пересобрать `python scripts/pack_quality_submit.py` если менялся `run.py`). Не коммитить ZIP.
+
+Заполнять **только факты с площадки**, без плейсхолдеров в git, пока нет реального прогона.
+
+1. **Check** — загрузить ZIP, дождаться вердикта (лимит ~3 мин). Записать: дата, статус (pass/fail/timeout), wall time.  
+   Check status: _pending_ · time: _—_ · notes: _—_
+2. Если Check зелёный — **Public**. Записать: дата, macro F1, F1_БАД, F1_огонь, wall time (~20 мин лимит). При регрессии — не выбирать этот ZIP кандидатом.  
+   Public macro F1: _pending_ · per-category: _—_
+3. Передать фактические Check/Public числа **Владу** для фазы 7 (его трекер здесь не правим).
+4. Фаза 6 Done в `TEAM_PLAN.md` — только после стабильного Public и выбора кандидата в финальные 2. **Сейчас: не Done.**
